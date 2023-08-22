@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Student_Service.Models;
 
@@ -6,6 +7,7 @@ namespace Student_Service.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class StudentController : ControllerBase
     {
         IStudentRepo _repo;
@@ -26,6 +28,7 @@ namespace Student_Service.Controllers
         }
 
 
+        
         [HttpPost]
         public IActionResult Create(Student student)
         {
