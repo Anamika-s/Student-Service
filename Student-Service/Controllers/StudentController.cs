@@ -18,6 +18,8 @@ namespace Student_Service.Controllers
 
         }
 
+
+        [Authorize(Roles ="User,Admin,Manager")]
         [HttpGet]
         public IActionResult Get()
         {
@@ -28,7 +30,8 @@ namespace Student_Service.Controllers
         }
 
 
-        
+
+        [Authorize(Roles ="Admin")]
         [HttpPost]
         public IActionResult Create(Student student)
         {
@@ -36,19 +39,19 @@ namespace Student_Service.Controllers
             Student temp = _repo.AddStudent(student);
             return Created("Ok", temp);
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public IActionResult EditStudent(int id, Student student)
         {
             return Ok(_repo.UpdateStudent(id, student));
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public IActionResult DelStudent(int id)
         {
             return Ok(_repo.DeleteStudent(id));
         }
-
+        [Authorize(Roles = "Manager")]
         [HttpGet("{id}")]
         public IActionResult GetStudentById(int id)
         {

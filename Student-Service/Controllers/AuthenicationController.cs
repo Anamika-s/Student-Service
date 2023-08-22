@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Student_Service.Models;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 
 namespace Student_Service.Controllers
@@ -22,11 +25,11 @@ namespace Student_Service.Controllers
             {
                 users = new List<User>
                  {
-                      new User(){ Id=1, UserName="user1", Password="pass"},
+                      new User(){ Id=1, UserName="user1", Password="pass", RoleName="Manager"},
 
-                      new User(){ Id=2, UserName="user2", Password="pass"},
-
-                      new User(){ Id=3, UserName="user3", Password="pass"}
+                      new User(){ Id=2, UserName="user2", Password="pass", RoleName="Admin"},
+                      
+                      new User(){ Id=3, UserName="user3", Password="pass", RoleName="User"}
                  };
             }
         }
@@ -39,7 +42,7 @@ namespace Student_Service.Controllers
         User obj = CheckUser(user);
             if(obj!=null)
             {
-               string tokenString =  GenerateToken(obj.UserName);
+               string tokenString =  GenerateToken(obj);
                 response = Ok(new { token = tokenString });
             }
 
@@ -49,18 +52,37 @@ namespace Student_Service.Controllers
 
         }
 
-        string GenerateToken(string username)
+        string GenerateToken(User   user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256Signature);
+            var claims = new ClaimsIdentity(new Claim[]
 
-            var token = new JwtSecurityToken(_config["Jwt:Issuer"],
-                                            _config["Jwt:Audience"],
-                                             null,
-                                            expires: DateTime.Now.AddMinutes(120),
-                                            signingCredentials: credentials);
+         {
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.GivenName, user.UserName),
+                new Claim(ClaimTypes.Role, user.RoleName)
+        });
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var tokenHandler = new JwtSecurityTokenHandler();
+
+            // Add roles as multiple claims
+            //foreach (var role in user.Roles)
+            //{
+            //    claims.Add(new Claim(ClaimTypes.Role, role.Name));
+            //}
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Issuer= _config["Jwt:Issuer"],
+                Audience=_config["Jwt:Audience"],
+                Subject = claims,
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = credentials
+                
+        };
+            
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
 
         }
 
